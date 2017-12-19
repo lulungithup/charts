@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no,width=device-width">
+        <meta name="format-detection" content="telephone=yes"/>
+		<meta charset="UTF-8">
+		<script type="text/javascript" src="js/base.js"></script>
+	   <script type="text/javascript">	
+	   	alert(1234567);
+	 	function GetInformation(responseData){		 		   
+			   var base = new Base64();
+			   var respons = base.decode(responseData);          
+			  var respon=$.parseJSON(respons);
+              var customer=respon.project_name;//客户
+              var order=respon.project_id;//订单类型   
+              var orderNum=respon.id;//订单单号
+              var total=respon.amount;//报销金额
+              var tim=respon.create_time;//订单日期                     
+              var time=getLocalTime(tim);           
+              var money=respon.project_amount;//金额
+              var stat=respon['status'];   //状态
+              var reimb=respon.reimbursements;//详细划分	 		
+	          var orderHtml=''; var reimHtml='';
+			  var reimbursementsDic = new Array();  // 用来存储不同类型的数据								
+			  var treateFee = 0.0;var trafficFee = 0.0;  var correspondence=0.0;
+			  var consumption=0.0;  var othere=0.0; 	var travellingAllowance =0.0; 
+			  var travellingTickets=0.0; var travellingHotel=0.0; var treateFeeDic= new Array();	
+		      var trafficFeeDic = new Array(); var correspondenceDic=new Array();    //新建数组
+			  var consumptionDic= new Array();  var othereDic= new Array();        
+			  var travellingAll= new Array(); var travellingTic= new Array(); 
+			  var travellingHot= new Array();  var travelling= new Array();		
+				for(var i = 0; i < reimb.length;i++){// 进行分类				
+					var reimbItem = reimb[i]; // 遍历的数据										   
+					if(reimbItem.type == 'ADMINISTRATION_TREATE' || reimbItem.type =='TREATE'){	
+				        treateFee += parseFloat(reimbItem.amount);	
+					    treateType = reimbItem.type;							    
+					}// 业务	
+					if(reimbItem.type == 'ADMINISTRATION_TRAFFIC' || reimbItem.type =='TRAFFIC'){
+						 trafficFee += parseFloat(reimbItem.amount);	
+                         trafficType = reimbItem.type;	
+					}// 交通		
+//					alert('组装好的数据4 == '+ reimbursementsDic);
+					if(reimbItem.type=='BUSINESS_ALLOWANCE'||reimbItem.type=='ADMINISTRATION_BUSINESS_ALLOWANCE'||reimbItem.type=='ADMINISTRATION_BUSINESS_TICKET'||reimbItem.type=='BUSINESS_TICKET'||reimbItem.type=='ADMINISTRATION_BUSINESS_HOTEL'||reimbItem.type=='BUSINESS_HOTEL'){						  						   
+	             		   		if(reimbItem.type=='ADMINISTRATION_BUSINESS_ALLOWANCE'||reimbItem.type=='BUSINESS_ALLOWANCE'){
+	             		   			  travellingAllowance += parseFloat(reimbItem.amount);
+	             		   			  travellingAllowanceType=reimbItem.type;		             		
+				             		}
+	             		   		if(reimbItem.type=='ADMINISTRATION_BUSINESS_TICKET'||reimbItem.type=='BUSINESS_TICKET'){
+				             			travellingTickets += parseFloat(reimbItem.amount);
+			             			    travellingTicketsType=reimbItem.type;
+				             		}
+	             		   		if(reimbItem.type=='ADMINISTRATION_BUSINESS_HOTEL'||reimbItem.type=='BUSINESS_HOTEL'){
+				             			  travellingHotel += parseFloat(reimbItem.amount);
+       								      travellingHotelType=reimbItem.type;
+				             		}
+					}// 差旅
+					if(reimbItem.type == 'ADMINISTRATION_CORRESPONDENCE' || reimbItem.type == 'CORRESPONDENCE'){
+						 correspondence += parseFloat(reimbItem.amount);						   
+	             		 correspondenceType=reimbItem.type;
+					}//通讯
+					if(reimbItem.type == 'ADMINISTRATION_PRODUCT_CONSUMPTION' || reimbItem.type == 'CONSUMPTION'){
+						consumption += parseFloat(reimbItem.amount);						   			
+	             	     consumptionType=reimbItem.type;
+	             
+					}// 低值
+					if(reimbItem.type == 'ADMINISTRATION_OTHERE' || reimbItem.type == 'OTHERE'){
+						othere += parseFloat(reimbItem.amount);						   					
+	             	    othereType=reimbItem.type;	 	             	
+					}// 其他																																																														
+
+				}//end 				  				 
+//				alert('组装好的数据3 == '+ reimbursementsDic);
+		        // 将整理的数据合并到 字典里面    
+		        if(treateFee != 0.0){ treateFeeDic.push({'cost':treateFee,'Type':treateType }); }// 业务
+			 	if(trafficFee != 0.0){ trafficFeeDic.push({ 'cost':trafficFee, 'Type':trafficType }); }
+				if(correspondence != 0.0){ correspondenceDic.push({ 'cost':correspondence, 'Type':correspondenceType }); } 
+			 	if(consumption!=0.0){ consumptionDic.push({  'cost':consumption, 'Type':consumptionType }); }
+			 	if(othere!=0.0){ othereDic.push({ 'cost':othere,  'Type':othereType }); }
+//			 	alert('组装好的数据1 == '+ reimbursementsDic);
+			 	if(travellingAllowance!=0.0){ travellingAll.push({ 'cost':travellingAllowance, 'Type':travellingAllowanceType }); }
+//			 	alert('组装好的数据1 == '+ reimbursementsDic);	
+			 	if(travellingTickets!=0.0){ travellingTic.push({ 'cost':travellingTickets, 'Type':travellingTicketsType }); }
+			 	if(travellingHotel!=0.0){ travellingHot.push({ 'cost':travellingHotel, 'Type':travellingHotelType }); }			   
+				travelling.push({ 'allowance':travellingAll, 'tickets':travellingTic, 'hotel':travellingHot });
+				reimbursementsDic.push({ 'treate':treateFeeDic, 'traffic':trafficFeeDic, 'travelling':travelling, 'correspondence':correspondenceDic, 'consumption':consumptionDic, 'othere':othereDic }); 
+				
+             for(var i=0;i<reimbursementsDic.length;i++){  //读取新的字典进行判断
+	             	var treate=reimbursementsDic[0]['treate'];
+	             	if(treate.length!=0){
+	             		         var  treatType=reimbursementsDic[0]['treate'][0]['Type'];                 
+				             	if(treatType=='ADMINISTRATION_TREATE'||treatType=='TREATE'){           		
+				             	 var treateCost=reimbursementsDic[0]['treate'][0]['cost'];//费用  
+				             		treateType='业务招待费'; var costMoney='金额';			             																	    									 							
+				             	}
+	             	}//end 
+                   var traffic=reimbursementsDic[0]['traffic'];
+                   if(traffic.length!=0){
+                   	             	 var  trafficType=reimbursementsDic[0]['traffic'][0]['Type'];
+					             	if(trafficType=='ADMINISTRATION_TRAFFIC'||trafficType=='TRAFFIC'){           		
+					             		var trafficCost=reimbursementsDic[0]['traffic'][0]['cost'];//费用  
+					             		trafficType='交通费';  costMoney='金额';					         
+					             	}
+                   }//end
+                       var allowance=reimbursementsDic[0]['travelling'][0]['allowance'];
+                       var tickets=reimbursementsDic[0]['travelling'][0]['tickets'];
+                       var hotel=reimbursementsDic[0]['travelling'][0]['hotel'];
+             	      if(allowance.length != 0 || tickets.length != 0 || hotel.length != 0){	             			             		             	
+			             	if(allowance.length != 0){
+			             		var travellingAllowanceType=reimbursementsDic[0]['travelling'][0]['allowance'][0]['Type'];
+			             			if(travellingAllowanceType=='ADMINISTRATION_BUSINESS_ALLOWANCE'||travellingAllowanceType=='BUSINESS_ALLOWANCE'){
+			             			var costMoney1='餐费';var allowanceCost=reimbursementsDic[0]['travelling'][0]['allowance'][0]['cost'];   
+			             		}
+			             	}//end			             		             			             	
+			                if(tickets.length != 0){
+			                	var travellingTicketsType=reimbursementsDic[0]['travelling'][0]['tickets'][0]['Type'];
+				             	if(travellingTicketsType=='ADMINISTRATION_BUSINESS_TICKET'||travellingTicketsType=='BUSINESS_TICKET'){
+				             			var costMoney2='机票/车票';var ticketsCost=reimbursementsDic[0]['travelling'][0]['tickets'][0]['cost'];
+				             		}
+			                }//end
+		             
+			             	if(hotel.length != 0){
+			             		var travellingHotelType=reimbursementsDic[0]['travelling'][0]['hotel'][0]['Type'];
+			             			if(travellingHotelType=='ADMINISTRATION_BUSINESS_HOTEL'||travellingHotelType=='BUSINESS_HOTEL'){		             			
+			             			var costMoney3='住宿';var hotelCost=reimbursementsDic[0]['travelling'][0]['hotel'][0]['cost'];
+			             		}
+			             	}//end 住宿不为空		             
+		             	    var travelType='差旅费';	             	
+             	  }//end 差旅费             	
+                  var correspondence=reimbursementsDic[0]['correspondence'];
+                  if(correspondence.length != 0){
+	                  	            var correspondenceType=reimbursementsDic[0]['correspondence'][0]['Type'];
+					             	if(correspondenceType=='ADMINISTRATION_CORRESPONDENCE'||correspondenceType=='CORRESPONDENCE'){
+					             		correspondenceType='通讯费';
+					             		var costMoney='金额';var correspondenceCost=reimbursementsDic[0]['correspondence'][0]['cost'];
+					             	}
+                  }//end 通讯费不为空
+                  var consumption=reimbursementsDic[0]['consumption'];
+                  if(consumption.length != 0){
+                  	             	var consumptionType=reimbursementsDic[0]['consumption'][0]['Type'];
+					             	if(consumptionType=='ADMINISTRATION_PRODUCT_CONSUMPTION'||consumptionType=='PRODUCT_CONSUMPTION'){
+					             		consumptionType='低值易耗品';
+					             		var costMoney='金额';var consumptionCost=reimbursementsDic[0]['consumption'][0]['cost'];
+					             	}
+                  }//end 低值易耗品不为空
+                  var othere=reimbursementsDic[0]['othere'];
+                  if(othere.length != 0){
+			                  var othereType=reimbursementsDic[0]['othere'][0]['Type'];
+			             	if(othereType=='OTHERE'||othereType=='ADMINISTRATION_OTHERE'){
+			             		othereType='其他费用';
+			             		var costMoney='金额'; var othereCost=reimbursementsDic[0]['othere'][0]['cost'];
+			             	}
+                  }//end 其他费用不为空
+     			
+               		reimHtml='<ul class="reim-cul">'+
+					 		        '<li class="b-bot treate"></li>'	+	
+					 		        '<li class="b-bot traffic"></li>'+
+					 		        '<li class="b-bot travel"></li>'	+	
+					 		        '<li class="b-bot correspondence"></li>'	+
+					 		       	'<li class="b-bot consumption"></li>'	+
+					 		       	'<li class="b-bot othere"></li>'	+
+			 	                    '</ul>';
+             	      $('.reim-content').html(reimHtml);
+             	     var treateHtml=''; var trafficHtml=''; var travelHtml='';  var correspondenceHtml=''; var consumptionHtml=''; var othereHtml='';
+             	     if(treate.length!=0){ 
+		             	    treateHtml= '<span class="clf"><span class="clf-bor">'+treateType+'</span></span>'+
+										 '<ul class="b-bot clf-ul b-top">'+
+										 '<li><span class="f-left">'+costMoney+'&nbsp;:&nbsp;</span><span class=" fred">'+treateCost+'</span></li>'+					
+										 '</ul>';             	                	
+		             	                	$('.treate').html(treateHtml);         	                	 
+             	     }else{$('.treate').hide();}//添加业务
+             	     if(traffic.length!=0){
+		             	         trafficHtml='<span class="clf"><span class="clf-bor">'+trafficType+'</span></span>'+
+									        '<ul class="b-bot clf-ul b-top">'+
+											'<li><span class="f-left">'+costMoney+'&nbsp;:&nbsp;</span><span class=" fred">'+trafficCost+'</span></li>'+					
+										    '</ul>';
+		             	          $(".traffic").html(trafficHtml);   
+             	    }else{$('.traffic').hide();}//添加交通
+             	    if(allowance.length !=0 || tickets.length !=0 || hotel.length !=0){              	              
+	             	           travelHtml='<span class="clf"><span class="clf-bor">'+travelType+'</span></span>'+
+									       '<ul class=" clf-travel b-top">'+
+										   '<li class="allowance hide1"></li>'+
+										   '<li class="tickets hide1"></li>'+		
+										   '<li class="hotel hide1"></li>'+		
+									       '</ul>'; 
+								$('.travel').html( travelHtml);  								    
+	                            var allowanceHtml=''; var ticketsHtml='';  var hotelHtml='';
+			             	    if(allowance.length!=0){
+			             	                 	allowanceHtml='<span class="f-left">'+costMoney1+'&nbsp;:&nbsp;</span><span class=" fred">'+allowanceCost+'</span>';			             	                	
+			             	                 	$('.allowance').html(allowanceHtml);	 $('.allowance').removeClass('hide1');
+			             	     }//添加餐费
+			             	    if(tickets.length !=0){			             	                 	
+			             	                 	ticketsHtml='<span class="f-left">'+costMoney2+'&nbsp;:&nbsp;</span><span class=" fred">'+ticketsCost+'</span>';
+			             	                 	$('.tickets').html(ticketsHtml); $('.tickets').removeClass('hide1');
+			             	     }//添加机票
+			             	     if(hotel.length!=0){
+			             	                 	hotelHtml='<span class="f-left">'+costMoney3+'&nbsp;:&nbsp;</span><span class=" fred">'+hotelCost+'</span>';
+			             	                 	$('.hotel').html(hotelHtml); $('.hotel').removeClass('hide1');
+			             	     }//添加住宿
+             	    }else{$('.travel').hide();}//添加差旅费
+	               if(correspondence.length!=0){
+			             	                	correspondenceHtml='<span class="clf"><span class="clf-bor">'+correspondenceType+'</span></span>'+
+															    '<ul class="b-bot clf-ul b-top">'+
+																'<li><span class="f-left">'+costMoney+'&nbsp;:&nbsp;</span><span class=" fred">'+correspondenceCost+'</span></li>'+					
+															    '</ul>';
+			             	               	$('.correspondence').html(correspondenceHtml);
+             	    }else{$('.correspondence').hide();}//添加通讯费
+             	    if(consumption.length!=0){
+			             	               	consumptionHtml=	'<span class="clf"><span class="clf-bor">'+consumptionType+'</span></span>'+
+														    '<ul class="b-bot clf-ul b-top">'+
+															'<li><span class="f-left">'+costMoney+'&nbsp;:&nbsp;</span><span class=" fred">'+consumptionCost+'</span></li>'+					
+														    '</ul>';            	               	
+			             	               	$('.consumption').html(consumptionHtml);
+             	   }else{$('.consumption').hide();}//添加低值易耗品
+             	    if(othere.length!=0){
+			             	               	othereHtml='<span class="clf"><span class="clf-bor">'+othereType+'</span></span>'+
+													    '<ul class="b-bot clf-ul b-top">'+
+														'<li><span class="f-left">'+costMoney+'&nbsp;:&nbsp;</span><span class=" fred">'+othereCost+'</span></li>'+					
+													    '</ul>';
+			             	               	$('.othere').html(othereHtml);             	               	
+             	    }//添加其他费用                            
+         }//end--for(reimb)  
+             	   	if(stat=='1'){stat='审核中';}
+					if(stat=='2'){stat='已通过';}
+					if(stat=='3'){stat='未通过';}
+		 		   orderHtml+= '<ul>'+
+		 		              '<li ><span class="f-left f7">报销单号：<span>'+orderNum+'</span></span><span class="f-right"><span class="status shz">'+stat+'</span><img class="status-img" src="images/Artboard 42 Copy 3@3x.png" alt="" /></span></li>'+
+		 		              '<li><span class="f-left f7 time-mg">'+time+'</span></li>'+
+						      '<li><span class="f-left">订单：<span>'+order+'</span></span></li>'+
+						      '<li><span class="f-left">客户：<span>'+customer+'</span></span></li>'+
+						      '<li><span class="f-left">订单金额：<span class="fred">'+money+'</span></span><span class="f-right amount">报销总额：<span class="fred">'+total+'</span></span></li>'+
+						      '</ul>'; 	        	 
+		        	  $('.reim-top').html(orderHtml);
+		        	 if(stat=='审核中'){$('.status').hide();}
+		        	 if(stat=='未通过'){$('.status').hide();$('.status-img').attr("src",'images/Artboard 43 Copy@3x.png');$('.edit').show();}
+		        	 if(stat=='已通过'){$('.status').hide();	$('.status-img').attr("src",'images/Artboard 45 Copy@3x.png'); }//end  判断状态
+	 		  
+		}//end GetInformation	 	
+         function getLocalTime(tim){  return new Date(parseInt(tim) * 1000).toLocaleString().replace(/年|月/g, "-");  }//时间转换	
+         function again(){  reEdit('分享的标题','分享的内容','图片地址'); } //调用ios页面
+
+</script>
+		<title>报销详情</title>		
+	<style type="text/css">
+	*{margin: 0;padding: 0;}
+	ul li{list-style: none;clear: both;}
+	.edit-sp{width: 80%;padding: 5px 20px 5px 10px;color: #e41f1f;border-radius: 3px;font-size: 0.9em;position: relative;}
+	.reim-box{width: 100%;background-color: #f2f2f2;height: 100vh;font-family: "PingFang SC";}
+	.reim-top{width:100%;padding: 2% 3%;box-sizing: border-box;background-color: #fff;}
+	.reim-top ul li span{display: inline-block;}
+	.reim-top ul li{height: 30px;line-height: 30px;font-size: 1em;color: #333;}
+	.f-left{float: left;color:#464646;}
+	.f-right{float: right;}
+	.f7{color: #999999;font-size: 0.8em;}
+	.fred{color: #464646;}
+	.hide1{display: none;}
+	/*报销详情*/
+	.reim-content{width: 100%;background-color: #f2f2f2;}
+	.reim-cul{height: auto;clear: both;}
+	.reim-cul li{width: 97%;border-radius: 5px;background-color: #FFFFFF;clear: both;margin: 5px auto 0;}
+	.time-mg{margin-top: -4px;}
+	.b-bot{border-bottom: 1px solid #f1f1f1;}
+	.b-top{border-top: 1px solid #f1f1f1;}
+	.clf{display: block;margin-left:3% ;color: #f5ce2f;height: 40px;line-height: 40px;}
+	.clf-ul{width: 100%;}
+	.clf-travel{padding-top: 3px;}
+	.amount{font-weight: 600;}
+	.clf-bor{border-left: 2px solid #f5ce2f;padding-left:6px;height: 16px;line-height:18px;display: inline-block;width: 30%;font-size: 1em;font-weight: 600;}
+	.clf-ul li{width: 100%;display: block; height: 40px;line-height: 42px; padding: 0 3%;box-sizing: border-box;font-size: 1em;}
+	.clf-ul li span{display: inline-block;}
+	.clf-travel li{height: 25px;line-height:25px;padding: 0 3%;width: 100%;box-sizing: border-box;font-size: 1em;}
+	.edit{width: 100%;background-color: #fff;height: 50px;line-height: 50px;text-align: right;position: relative;}
+	.edit img{width: 16px;height: 16px;position: absolute;right:80px;top: 35%;}
+	.resubmit{width: 12px;height: 15px;display: inline-block;margin-left: 5px;position: absolute;}
+	.status-img{width: 50px;height: 18;vertical-align: middle;margin-top: 5px;}
+
+	</style>		
+	</head>
+	<body style="Font-size=62.5%">
+		<!--<span style="border-left: #F5CE2F solid 2px;height: 15px;"></span><span>你好</span>-->
+		<div class="reim-box"> 
+				<div class="reim-top"></div>	 
+			    <div class="edit hide1 b-top" onclick="again()"><img  src="images/Artboard 43 Copy 7@3x.png" alt="" /><span class="edit-sp">重新编辑</span></div>
+				<div class="reim-content">
+						<ul class="reim-cul"></ul>
+				</div>
+	    </div>	 
+	 <script type="text/javascript" src="js/jquery-2.1.4.min.js"></script>
+	</body>	 	
+</html>

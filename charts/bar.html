@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no,width=device-width">
+        <meta name="format-detection" content="telephone=yes"/>
+		<title></title>
+		<style type="text/css">
+			*{margin: 0;padding: 0;}
+		</style>
+	</head>
+  <body >
+		<div style="width: 100%;height: 350px;overflow: scroll;">
+   		     <div id="container" style="height: 100%;width: 100%; "></div>
+       	</div>
+		 <div id="main" style="width: 100%;height:300px;border-top: 1px solid #999999;padding-top: 10px;"></div>
+ <script type="text/javascript" src="js/echarts.min.js"></script>
+    <script type="text/javascript">
+     	var datas=[{"name":"合作1部","val":100,"projectAmount":123},{"name":"合作12部","val":100,"projectAmount":123},{"name":"合作一部","val":100,"projectAmount":123},{"name":"合作二部","val":-20,"projectAmount":345},{"name":"合作三部","val":14,"projectAmount":216},{"name":"部门一部","val":34,"projectAmount":421},{"name":"部门二部","val":30,"projectAmount":113},{"name":"部门三步","val":-10,"projectAmount":210},{"name":"部门四部","val":26,"projectAmount":510},{"name":"部门五部","val":15,"projectAmount":431}];
+    	   getData(datas);
+       function  getData(datas){       	       	       	
+       	console.log(datas);       	             	     
+             	        var Datas=[];  
+					    var test=[];
+				          	  for(var i = 0; i <datas.length; i++){				          	 
+									var dataJson = {};		
+									var proj=datas[i]['projectAmount'];								
+									dataJson.name = datas[i]['name'];
+                                    dataJson.value =proj.toFixed(2);
+									Datas.push(dataJson);									  							       
+									}				          	 
+				          	 for(var j=0;j<Datas.length;j++){
+				          	 	test.push(Datas[j]['name']);
+				          	 }				          
+                getting(Datas,test);  
+       	var department=[];
+       	var profit=[];
+        for(var i=0;i<datas.length;i++){
+        	   var Name=datas[i].name;
+        	   var value=datas[i].val;       
+        	   department.push(Name);
+        	   profit.push(value);
+        	   
+        }
+        console.log(department);
+        var myChart = echarts.init(document.getElementById('main'));
+        var option = {      
+            tooltip: {},
+            legend: {
+                data:['成员项目利润']
+            },
+            xAxis: {
+            	        type: 'category',  
+                    boundaryGap: [0, 0.01],  
+            	    	    data: department,
+                    axisLabel:{  
+                         interval:0,//横轴信息全部显示  
+                         rotate:-30,//-30度角倾斜显示  
+                    }      
+            },
+            yAxis: {},
+              itemStyle:{
+                  normal:{
+                  	color:function(params){
+                  		 var index_color = params.value;
+                                    if(index_color>=0){
+                                        return '#ff5050';
+                                    }else {
+                                        return '#2cd7aa';
+                                    }
+                  	}
+                  	}
+              },
+            series: [{
+                name: '项目利润',
+                type: 'bar',
+                data: profit             
+            }]
+        };
+     
+        myChart.setOption(option);
+   }// getData  
+   
+  //饼图 
+   function  getting(datas,test){ 	 
+					 		var dom = document.getElementById("container");
+							var myChart = echarts.init(dom);
+							var app = {};
+							var option = null;
+							var chart=datas;									
+							option = {
+							    title: {							
+							    	    text:'成员项目收入',							     
+							        left: 'center'	,
+							        top:10
+							    },
+							    tooltip : {       
+							        trigger: 'item',								        
+							        textStyle : {
+											fontWeight : 'normal',
+											fontSize : 14
+											},
+							        formatter: "{a} <br/>{b} : {c} ({d}%)"
+							    },
+//							        legend: {
+//							         orient: 'vertical',
+//							         top: 'middle',
+//							         bottom:0,
+//							         top:10,
+//							         left: 'center',
+//					                 data:test
+
+//							    },	//底部标注	  
+							    series : [
+							        {
+							            type: 'pie',
+							            name:'项目收入',
+							            radius : '60%',
+							            center: ['50%', '50%'],
+							            selectedMode: 'single',
+							            data:chart,	
+							            symbolSize: 2,
+							            itemStyle: {
+							                emphasis: {
+							                    shadowBlur: 10,
+							                    shadowOffsetX: 0,
+							                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+							                }
+							            }
+							        }
+							    ]
+							};
+							
+							if (option && typeof option === "object") {
+							    myChart.setOption(option, true);
+							}	
+					 }//end--gitting  
+    </script>
+		</script>
+	</body>
+</html>
